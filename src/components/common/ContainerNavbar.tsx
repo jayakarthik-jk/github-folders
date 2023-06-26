@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { type FC } from "react";
 import { faArrowLeft, faEllipsisH } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -17,18 +17,21 @@ const ContainerNavbar: FC<ContainerNavbarProps> = ({
 }) => {
   return (
     <div className="h-12 transition-all duration-300 flex justify-between items-center bg-dark-100 rounded-md">
-      <FontAwesomeIcon
-        icon={faArrowLeft}
-        className="mx-4"
+      <div
+        className="flex justify-center items-center cursor-pointer mx-4 h-full"
         onClick={onBack}
-        size="lg"
-      />
-      {title}
-      <FontAwesomeIcon
-        icon={faEllipsisH}
-        onClick={() => setMenuVisibility(!menuVisibility)}
-        className="mx-4"
-      />
+      >
+        <FontAwesomeIcon icon={faArrowLeft} size="lg" />
+      </div>
+      <span style={{ userSelect: "none" }}>{title}</span>
+      <div
+        className="flex justify-center items-center cursor-pointer mx-4 h-full"
+        onClick={() => {
+          setMenuVisibility(!menuVisibility);
+        }}
+      >
+        <FontAwesomeIcon icon={faEllipsisH} size="lg" />
+      </div>
     </div>
   );
 };

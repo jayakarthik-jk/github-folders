@@ -1,7 +1,7 @@
-import { FC } from "react";
+import { type FC } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ContainerChildProps } from "./Container";
+import { type ContainerChildProps } from "./Container";
 import {
   faArrowDown,
   faArrowUp,
@@ -15,10 +15,10 @@ interface DropDownMenuProps {
   setVisibility: (visibility: boolean) => void;
   size: ContainerChildProps["size"];
   setSize: (size: ContainerChildProps["size"]) => void;
-  sortOrder: "asc" | "desc";
-  setSortOrder: (sortOrder: "asc" | "desc") => void;
-  searchBarVisibility: boolean;
-  setSearchBarVisibility: (visibility: boolean) => void;
+  sortOrder: SortOptions;
+  setSortOrder: (sortOrder: SortOptions) => void;
+  searchBarVisibility?: boolean;
+  setSearchBarVisibility?: (visibility: boolean) => void;
 }
 
 const DropDownMenu: FC<DropDownMenuProps> = ({
@@ -37,17 +37,21 @@ const DropDownMenu: FC<DropDownMenuProps> = ({
         visibility ? "top-12 right-6 scale-100" : "top-0 -right-12 scale-0"
       } bg-dark-100 absolute w-1/2 max-w-xs rounded-md p-4 transition-all duration-300 flex flex-col gap-4 z-10`}
     >
-      <div
-        className="flex justify-between items-center"
-        onClick={() => {
-          setVisibility(false);
-          setSearchBarVisibility(!searchBarVisibility);
-        }}
-      >
-        <div>Search Here</div>
-        <FontAwesomeIcon icon={faSearch} size="lg" />
-      </div>
-      <hr className="border-dark-300" />
+      {searchBarVisibility != null && setSearchBarVisibility != null && (
+        <>
+          <div
+            className="flex justify-between items-center"
+            onClick={() => {
+              setVisibility(false);
+              setSearchBarVisibility(!searchBarVisibility);
+            }}
+          >
+            <div>Search Here</div>
+            <FontAwesomeIcon icon={faSearch} size="lg" />
+          </div>
+          <hr className="border-dark-300" />
+        </>
+      )}
 
       <div
         className="flex justify-between items-center"
