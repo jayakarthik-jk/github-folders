@@ -45,7 +45,7 @@ const Navbar: FC = () => {
   return (
     <nav className="sticky flex justify-between items-center pt-4 pb-2">
       <Link href="/" className="flex justify-center items-center gap-4">
-        <FontAwesomeIcon icon={faFolder} size="2xl" className="text-primary" />
+        <FontAwesomeIcon icon={faFolder} size="2xl" />
         Github Folders
       </Link>
       <div className="flex justify-center items-center gap-2">
@@ -72,6 +72,7 @@ const Navbar: FC = () => {
                     className="rounded-full"
                   />
                 )}
+                Workspace
               </Button>
             </Link>
             <Button onClick={logout}>

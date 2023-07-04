@@ -32,7 +32,7 @@ const Folder: FC<FolderProps> = ({
       <FontAwesomeIcon
         icon={faFolder}
         className={`${size === "grid" ? "w-32" : "w-12"} ${
-          selected ? "text-primary-200" : "text-white"
+          selected ? "text-dark-200" : "text-white"
         }`}
         size={size === "grid" ? "7x" : "3x"}
       />

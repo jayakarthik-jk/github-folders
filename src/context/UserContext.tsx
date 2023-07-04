@@ -1,5 +1,5 @@
 import { type FC, createContext, useState, useEffect, useContext } from "react";
-import supabase from "@/lib/supabase";
+import Supabase from "@/lib/supabase";
 import { type User } from "@supabase/supabase-js";
 
 interface UserContextType {
@@ -27,7 +27,7 @@ interface UserProviderProps {
 const UserProvider: FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const login = async (): Promise<void> => {
-    await supabase.auth.signInWithOAuth({
+    await Supabase.getInstance().auth.signInWithOAuth({
       provider: "github",
       options: {
         scopes: "public_repo",
@@ -36,13 +36,13 @@ const UserProvider: FC<UserProviderProps> = ({ children }) => {
   };
 
   const logout = async (): Promise<void> => {
-    await supabase.auth.signOut();
+    await Supabase.getInstance().auth.signOut();
     setUser(null);
   };
 
   const checkUser = (): void => {
-    supabase.auth
-      .getUser()
+    Supabase.getInstance()
+      .auth.getUser()
       .then((user) => {
         if (user.error != null) {
           console.log(user.error.message);

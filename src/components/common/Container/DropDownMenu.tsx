@@ -1,7 +1,7 @@
 import { type FC } from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { type ContainerChildProps } from "./Container";
+import { type ContainerChildProps } from ".";
 import {
   faArrowDown,
   faArrowUp,

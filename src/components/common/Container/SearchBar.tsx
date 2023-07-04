@@ -2,7 +2,7 @@ import type { LegacyRef, FC } from "react";
 
 import { faArrowRight, faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Button from "../common/Button";
+import Button from "../Button";
 
 interface SearchBarProps {
   visibility: boolean;
@@ -25,7 +25,7 @@ const SearchBar: FC<SearchBarProps> = ({
 }) => {
   return (
     <div
-      className={`fixed left-0 ${
+      className={`fixed z-10 left-0 ${
         visibility ? "bottom-0" : "-bottom-full"
       } w-full bg-dark-100 flex justify-center items-center gap-2 p-4 transition-all duration-300`}
     >

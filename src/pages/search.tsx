@@ -1,9 +1,10 @@
 import Container from "@/components/common/Container";
-import SearchBar from "@/components/common/SearchBar";
-import * as GithubApi from "@/utils/githubApi";
+import SearchBar from "@/components/common/Container/SearchBar";
+import GithubApi from "@/lib/githubApi";
 import { useRouter } from "next/router";
 import React, { useState, type FC, useRef, useEffect } from "react";
 import User from "@/components/searchPage/User";
+import Spinner from "@/components/common/Spinner";
 
 const SearchPage: FC = () => {
   const router = useRouter();
@@ -20,11 +21,24 @@ const SearchPage: FC = () => {
     hasPreviousPage: false,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   useEffect(() => {
+    setLoading(true);
     const fetchData = async (): Promise<void> => {
       if (searchQueryRef.current === null) {
+        console.log("developer error: searchQueryRef is null");
+        setError("Something went wrong");
+        setLoading(false);
         return;
       }
+
+      if (pageInfo.startCursor !== "" && pageInfo.endCursor !== "") {
+        setLoading(false);
+        return;
+      }
+
       const result = await GithubApi.searchUser({
         query:
           searchQueryRef.current.value === ""
@@ -33,66 +47,79 @@ const SearchPage: FC = () => {
         perPage: pageSize,
         pageInfo,
       });
+
       if (result === null) {
-        return;
-      }
-      if (pageInfo.startCursor !== "" && pageInfo.endCursor !== "") {
+        setError("Login to search more users");
+        setLoading(false);
         return;
       }
       setPageInfo(result.pageInfo);
       setUsers(result.nodes);
-      setTotalCount(result?.userCount);
+      setTotalCount(result.userCount);
+      setLoading(false);
     };
 
     fetchData().catch((err) => {
+      setError("Something went wrong");
+      setLoading(false);
       console.log(err);
     });
   }, [pageInfo]);
 
   return (
     <div>
-      <Container
-        title={
-          totalCount === 0 ? "Search Results" : `${totalCount} Results Found`
-        }
-        currentPage={currentPage}
-        onPageChange={(page) => {
-          if (currentPage === page) {
-            return;
+      {error !== "" ? (
+        <div className="flex justify-center items-center w-full h-[90vh] text-lg font-bold text-red-500">
+          {error}
+        </div>
+      ) : loading ? (
+        <span className="flex justify-center items-center w-full h-[90vh]">
+          <Spinner />
+        </span>
+      ) : (
+        <Container
+          title={
+            totalCount === 0 ? "Search Results" : `${totalCount} Results Found`
           }
+          currentPage={currentPage}
+          onPageChange={(page) => {
+            if (currentPage === page) {
+              return;
+            }
 
-          if (currentPage < page) {
-            if (pageInfo.hasNextPage) {
-              setPageInfo({
-                startCursor: pageInfo.endCursor,
-                endCursor: "",
-                hasPreviousPage: true,
-                hasNextPage: false,
-              });
+            if (currentPage < page) {
+              if (pageInfo.hasNextPage) {
+                setPageInfo({
+                  startCursor: pageInfo.endCursor,
+                  endCursor: "",
+                  hasPreviousPage: true,
+                  hasNextPage: false,
+                });
+              }
+            } else {
+              if (pageInfo.hasPreviousPage) {
+                setPageInfo((prev) => {
+                  return {
+                    endCursor: prev.startCursor,
+                    startCursor: "",
+                    hasNextPage: true,
+                    hasPreviousPage: false,
+                  };
+                });
+              }
             }
-          } else {
-            if (pageInfo.hasPreviousPage) {
-              setPageInfo((prev) => {
-                return {
-                  endCursor: prev.startCursor,
-                  startCursor: "",
-                  hasNextPage: true,
-                  hasPreviousPage: false,
-                };
-              });
-            }
-          }
-          setCurrentPage(page);
-        }}
-        pageCount={Math.ceil(totalCount / pageSize)}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        visiblePagesCount={1}
-      >
-        {users.map((user) => {
-          return <User user={user} title={user.login} key={user.login} />;
-        })}
-      </Container>
+            setCurrentPage(page);
+          }}
+          pageCount={Math.ceil(totalCount / pageSize)}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          visiblePagesCount={1}
+        >
+          {users.map((user) => {
+            return <User user={user} title={user.login} key={user.login} />;
+          })}
+        </Container>
+      )}
       <SearchBar
         inputRef={searchQueryRef}
         visibility

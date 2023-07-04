@@ -16,7 +16,7 @@ const ContainerNavbar: FC<ContainerNavbarProps> = ({
   onBack,
 }) => {
   return (
-    <div className="h-12 transition-all duration-300 flex justify-between items-center bg-dark-100 rounded-md">
+    <div className="h-12 transition-all duration-300 flex justify-between items-center bg-dark-100 rounded-lg">
       <div
         className="flex justify-center items-center cursor-pointer mx-4 h-full"
         onClick={onBack}

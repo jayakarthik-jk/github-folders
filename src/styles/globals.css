@@ -8,6 +8,7 @@
   --dark-200: #161b22;
   --dark-300: #0d1117;
   --light: #fff;
+  --primary-300: #6a17e3;
 }
 
 body {
@@ -25,12 +26,20 @@ body {
   scroll-behavior: smooth;
 }
 
-.tooltip-container > .tooltip-text {
-  transform: scale(0%);
-  opacity: 0;
+::-webkit-scrollbar {
+  width: 2px;
 }
 
-.tooltip-container:hover > .tooltip-text {
-  transform: scale(100%);
-  opacity: 1;
+::-webkit-scrollbar-track {
+  background: #888;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-300);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-300);
 }
