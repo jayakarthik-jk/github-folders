@@ -1,8 +1,8 @@
 import type { FC, ComponentType } from "react";
 
 interface DoubleClickProps {
-  onSingleClick: () => void;
-  onDoubleClick: () => void;
+  onSingleClick: (e: React.MouseEvent) => void;
+  onDoubleClick: (e: React.MouseEvent) => void;
 }
 
 const withDoubleClick = <P extends DoubleClickProps>(
@@ -10,15 +10,15 @@ const withDoubleClick = <P extends DoubleClickProps>(
 ): FC<P> => {
   const WithDoubleClick: FC<P> = (props: P) => {
     let timer: NodeJS.Timeout | null = null;
-    const handleClick = (): void => {
+    const handleClick = (e: React.MouseEvent): void => {
       if (timer !== null) {
         clearTimeout(timer);
         timer = null;
-        props.onDoubleClick();
+        props.onDoubleClick(e);
       } else {
         timer = setTimeout(() => {
           timer = null;
-          props.onSingleClick();
+          props.onSingleClick(e);
         }, 300);
       }
     };

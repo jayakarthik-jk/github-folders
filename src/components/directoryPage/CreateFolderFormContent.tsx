@@ -3,6 +3,7 @@ import Button from "../common/Button";
 import Spinner from "../common/Spinner";
 import { useUser } from "@/context/UserContext";
 import Supabase from "@/lib/supabase";
+import { useRouter } from "next/router";
 
 interface FolderFormContentProps {
   path: string[];
@@ -17,6 +18,8 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { user } = useUser();
+  const router = useRouter();
+
   const handleCreateFolder = async (): Promise<void> => {
     if (inputRef.current == null) {
       console.log("developer error: cannot find input ref");
@@ -28,29 +31,51 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
       setError("Folder name cannot be empty");
       return;
     }
-    setLoading(true);
     if (user == null || user.user_metadata.user_name == null) {
       setError("Something went wrong, please try logging in again");
       return;
     }
-    const username = user.user_metadata.user_name;
-    const [parentName, pathString] =
-      path.length - 1 === 0
-        ? [null, folderName]
-        : [path[path.length - 1], path.slice(1).join("/") + "/" + folderName];
+    setError("");
+    setLoading(true);
+
+    const userName = user.user_metadata.user_name;
+    const userId = user.id;
+    // TODO: replace path[path.length - 1]
+
+    let parentId = null;
+
+    if (path.length !== 0) {
+      const responseParentId = await Supabase.getFolderId(
+        userName,
+        path.join("/")
+      );
+
+      if (responseParentId instanceof Error) {
+        setError("Something went wrong, please try again later");
+        setLoading(false);
+        return;
+      }
+      parentId = responseParentId;
+    }
+    const pathString =
+      path.length === 0
+        ? folderName
+        : path.slice(1).join("/") + "/" + folderName;
 
     const res = await Supabase.createFolder({
+      userId,
+      userName,
       folderName,
-      parentName,
+      parentId,
       path: pathString,
-      username,
     });
     if (res instanceof Error) {
       setError(res.message);
       setLoading(false);
       return;
     }
-    // TODO: update the ui
+    await router.push(`${path.join("/")}/${folderName}`);
+    setError("");
     setLoading(false);
     closeModel();
   };
@@ -85,7 +110,8 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
       </Button>
       {error !== "" && <span className="text-red-500">{error}</span>}
       {loading && (
-        <span className="p-4">
+        <span className="p-4 flex flex-col gap-4 font-bold text-lg">
+          Loading . . .
           <Spinner />
         </span>
       )}

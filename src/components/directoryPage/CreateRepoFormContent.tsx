@@ -4,6 +4,7 @@ import Spinner from "../common/Spinner";
 import GithubApi from "@/lib/githubApi";
 import Supabase from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
+import { useRouter } from "next/router";
 
 interface RepoFormContentProps {
   path: string[];
@@ -17,15 +18,16 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
     totalCount: 0,
     nodes: [],
   });
-  const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchRepos = async (): Promise<void> => {
       setLoading(true);
       const res = await GithubApi.getMyRepo();
-      if (res == null) {
+      if (res instanceof Error) {
         setError(
           "User not authenticated, if you are authenticated please try logging out and logging in again"
         );
@@ -48,7 +50,8 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
 
   if (loading) {
     return (
-      <span className="p-16">
+      <span className="p-16 flex flex-col gap-4 font-bold text-lg">
+        Loading . . .
         <Spinner />
       </span>
     );
@@ -60,30 +63,46 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
       setLoading(false);
       return;
     }
-    const username = user.user_metadata.user_name;
+    const userName = user.user_metadata.user_name;
 
-    const [folderName, pathString] =
+    // TODO replace path[path.length - 1]
+    let folderId = null;
+    if (path.length - 1 !== 0) {
+      const responseParentId = await Supabase.getFolderId(
+        userName,
+        path.join("/")
+      );
+      if (responseParentId instanceof Error) {
+        setError("Something went wrong, please try again later");
+        setLoading(false);
+        return;
+      }
+      folderId = responseParentId;
+    }
+
+    const pathString =
       path.length - 1 === 0
-        ? [null, repo.name]
-        : [path[path.length - 1], path.slice(1).join("/") + "/" + repo.name];
+        ? repo.name
+        : path.slice(1).join("/") + "/" + repo.name;
 
     const result = await Supabase.createRepo({
       repoName: repo.name,
-      repoId: repo.id,
-      username,
-      folderName,
+      userId: user.id,
+      userName,
+      folderId,
       path: pathString,
     });
 
     if (result instanceof Error) {
       setError(result.message);
       setLoading(false);
-
       return;
     }
+
+    router.reload();
     setLoading(false);
+    setError("");
     closeModel();
-    // TODO: update the ui
   };
   return (
     <ul className="max-h-[50vh] overflow-y-scroll">

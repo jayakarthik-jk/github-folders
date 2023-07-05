@@ -11,60 +11,89 @@ export interface Database {
     Tables: {
       Folder: {
         Row: {
-          created_at: string | null
+          created_at: string
+          folder_name: string
           id: number
-          parent_name: string | null
+          parent_id: number | null
           path: string
-          title: string
-          username: string
+          user_id: string
+          user_name: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
+          folder_name: string
           id?: number
-          parent_name?: string | null
+          parent_id?: number | null
           path: string
-          title: string
-          username: string
+          user_id: string
+          user_name: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
+          folder_name?: string
           id?: number
-          parent_name?: string | null
+          parent_id?: number | null
           path?: string
-          title?: string
-          username?: string
+          user_id?: string
+          user_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Folder_parent_id_fkey"
+            columns: ["parent_id"]
+            referencedRelation: "Folder"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Folder_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       Repo: {
         Row: {
-          created_at: string | null
-          folder_name: string | null
+          created_at: string
+          folder_id: number | null
           id: number
           path: string
-          repo_id: string
-          title: string
-          username: string
+          repo_name: string
+          user_id: string
+          user_name: string
         }
         Insert: {
-          created_at?: string | null
-          folder_name?: string | null
+          created_at?: string
+          folder_id?: number | null
           id?: number
           path: string
-          repo_id: string
-          title: string
-          username: string
+          repo_name: string
+          user_id: string
+          user_name: string
         }
         Update: {
-          created_at?: string | null
-          folder_name?: string | null
+          created_at?: string
+          folder_id?: number | null
           id?: number
           path?: string
-          repo_id?: string
-          title?: string
-          username?: string
+          repo_name?: string
+          user_id?: string
+          user_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "Repo_folder_id_fkey"
+            columns: ["folder_id"]
+            referencedRelation: "Folder"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Repo_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

@@ -11,21 +11,29 @@ interface SearchUserProps {
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export default class GithubApi {
   static session: Session | null = null;
-  static getInstance = async (): Promise<Octokit | null> => {
-    const session = await Supabase.getInstance().auth.getSession();
-    if (session.error !== null || session.data.session === null) return null;
-    if (session.data.session.provider_token == null) {
-      const signOutRes = await Supabase.getInstance().auth.signOut();
-      if (signOutRes.error !== null) {
-        console.log(signOutRes.error);
+  static getInstance = async (): Promise<Octokit | Error> => {
+    const sessionResponse = await Supabase.getInstance().auth.getSession();
+    if (
+      sessionResponse.error !== null ||
+      sessionResponse.data.session === null
+    ) {
+      return new Error("login");
+    }
+    let session = sessionResponse.data.session;
+    if (session.provider_token == null) {
+      const response = await Supabase.getInstance().auth.refreshSession(
+        session
+      );
+      if (response.error !== null || response.data.session === null) {
+        return new Error("login");
       }
-      return null;
+      session = response.data.session;
     }
 
     const instance = new Octokit({
-      auth: session.data.session.provider_token,
+      auth: session.provider_token,
     });
-    GithubApi.session = session.data.session;
+    GithubApi.session = session;
     return instance;
   };
 
@@ -33,10 +41,10 @@ export default class GithubApi {
     query = "popular",
     perPage = 10,
     pageInfo,
-  }: SearchUserProps): Promise<SearchUserResponse["search"] | null> => {
+  }: SearchUserProps): Promise<SearchUserResponse["search"] | Error> => {
     const octokit = await GithubApi.getInstance();
-    if (octokit === null) {
-      return null;
+    if (octokit instanceof Error) {
+      return octokit;
     }
     const response = await octokit.graphql<SearchUserResponse>(
       `
@@ -74,14 +82,14 @@ export default class GithubApi {
     return response.search;
   };
 
-  static getMyRepo = async (): Promise<Repositories | null> => {
+  static getMyRepo = async (): Promise<Repositories | Error> => {
     const octokit = await GithubApi.getInstance();
-    if (octokit === null) {
-      return null;
+    if (octokit instanceof Error) {
+      return octokit;
     }
-    const username = this.session?.user.user_metadata.user_name;
+    const username = this.session?.user?.user_metadata?.user_name;
     if (username == null) {
-      return null;
+      return new Error("login");
     }
     const response = await octokit.graphql<RepositoriesResponse>(
       `

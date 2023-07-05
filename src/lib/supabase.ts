@@ -38,14 +38,31 @@ export default class Supabase {
     Supabase.client = instance;
   }
 
+  static getFolderId = async (
+    userName: string,
+    path: string
+  ): Promise<number | Error> => {
+    const { data: folder, error: folderError } = await Supabase.getInstance()
+      .from(Supabase.tables.FOLDER)
+      .select("id")
+      .eq("user_name", userName)
+      .eq("path", path)
+      .single();
+
+    if (folderError !== null || folder === null) {
+      return new Error("cannot find folder, try again later");
+    }
+    return folder.id;
+  };
+
   static getRootFolders = async (
-    username: string
+    userName: string
   ): Promise<FolderType[] | null> => {
     const { data: folders, error: folderError } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .select("*")
-      .eq("username", username)
-      .is("parent_name", null);
+      .eq("user_name", userName)
+      .is("parent_id", null);
 
     if (folderError !== null) {
       return null;
@@ -53,16 +70,20 @@ export default class Supabase {
     return folders;
   };
 
-  static getSubFolders = async (
-    username: string,
-    parentFolderName: string,
-    path: string
-  ): Promise<FolderType[] | null> => {
+  static getSubFolders = async ({
+    userName,
+    parentId,
+    path,
+  }: {
+    userName: string;
+    parentId: number;
+    path: string;
+  }): Promise<FolderType[] | null> => {
     const { data: folders, error: folderError } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .select("*")
-      .eq("username", username)
-      .eq("parent_name", parentFolderName);
+      .eq("user_name", userName)
+      .eq("parent_id", parentId);
 
     if (folderError !== null) {
       return null;
@@ -74,16 +95,20 @@ export default class Supabase {
     return result;
   };
 
-  static getRepos = async (
-    username: string,
-    folderName: string,
-    path: string
-  ): Promise<RepoType[] | null> => {
+  static getRepos = async ({
+    userName,
+    folderId,
+    path,
+  }: {
+    userName: string;
+    folderId: number;
+    path: string;
+  }): Promise<RepoType[] | null> => {
     const { data: repos, error: repoError } = await Supabase.getInstance()
       .from(Supabase.tables.REPO)
       .select("*")
-      .eq("username", username)
-      .eq("folder_name", folderName);
+      .eq("user_name", userName)
+      .eq("folder_id", folderId);
 
     if (repoError !== null) {
       return null;
@@ -96,22 +121,26 @@ export default class Supabase {
   };
 
   static createFolder = async ({
-    username,
+    userId,
+    userName,
     folderName,
+    parentId,
     path,
-    parentName,
   }: {
-    username: string;
+    userId: string;
+    userName: string;
     folderName: string;
+    parentId: number | null;
     path: string;
-    parentName: string | null;
   }): Promise<FolderType | Error> => {
     const { data: existingFolder, error: existingFolderError } =
       await Supabase.getInstance()
         .from(Supabase.tables.FOLDER)
         .select("*")
-        .eq("username", username)
+        .eq("username", userName)
         .eq("path", path);
+
+    console.log({ existingFolder, existingFolderError });
 
     if (existingFolderError !== null) {
       return new Error("Something went wrong, try again later");
@@ -123,38 +152,45 @@ export default class Supabase {
     const { data: folder, error: folderError } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .insert({
-        username,
-        title: folderName,
+        user_id: userId,
+        user_name: userName,
+        folder_name: folderName,
+        parent_id: parentId !== null ? +parentId : null,
         path,
-        parent_name: parentName,
       })
       .select("*")
       .single();
 
+    console.log({
+      folder,
+      folderError,
+    });
+
     if (folderError !== null) {
       return new Error("cannot create folder, try again later");
     }
+
     return folder;
   };
 
   static createRepo = async ({
-    username,
     repoName,
-    repoId,
+    userId,
+    userName,
+    folderId,
     path,
-    folderName,
   }: {
-    username: string;
     repoName: string;
-    repoId: string;
+    userId: string;
+    userName: string;
+    folderId: number | null;
     path: string;
-    folderName: string | null;
   }): Promise<RepoType | Error> => {
     const { data: existingRepo, error: existingRepoError } =
       await Supabase.getInstance()
         .from(Supabase.tables.REPO)
         .select("*")
-        .eq("username", username)
+        .eq("username", userName)
         .eq("path", path);
 
     if (existingRepoError !== null) {
@@ -168,11 +204,11 @@ export default class Supabase {
     const { data: repo, error: repoError } = await Supabase.getInstance()
       .from(Supabase.tables.REPO)
       .insert({
-        username,
-        title: repoName,
+        repo_name: repoName,
+        user_id: userId,
+        user_name: userName,
+        folder_id: folderId !== null ? +folderId : null,
         path,
-        repo_id: repoId,
-        folder_name: folderName,
       })
       .select("*")
       .single();

@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import React, { useState, type FC, useRef, useEffect } from "react";
 import User from "@/components/searchPage/User";
 import Spinner from "@/components/common/Spinner";
+import { useUser } from "@/context/UserContext";
 
 const SearchPage: FC = () => {
   const router = useRouter();
@@ -23,7 +24,7 @@ const SearchPage: FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const { logout } = useUser();
   useEffect(() => {
     setLoading(true);
     const fetchData = async (): Promise<void> => {
@@ -48,9 +49,10 @@ const SearchPage: FC = () => {
         pageInfo,
       });
 
-      if (result === null) {
+      if (result instanceof Error) {
         setError("Login to search more users");
         setLoading(false);
+        await logout();
         return;
       }
       setPageInfo(result.pageInfo);
@@ -64,7 +66,7 @@ const SearchPage: FC = () => {
       setLoading(false);
       console.log(err);
     });
-  }, [pageInfo]);
+  }, [logout, pageInfo]);
 
   return (
     <div>

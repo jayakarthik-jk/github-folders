@@ -9,11 +9,15 @@ import { filter, paginate, sort } from "@/utils/arrays";
 import Supabase from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
 import AddNew from "@/components/directoryPage/AddNewButton";
+import Button from "@/components/common/Button";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
+import useDeviceType from "@/hooks/useDeviceType";
 
 export interface UserPageProps {
   path: string[];
   username: string;
-  currentFolderName: string;
+  currentFolderName: string | null;
   data: FolderRepo[];
 }
 
@@ -27,11 +31,18 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
 
   const [selected, setSelected] = useState<FolderRepo[]>([]);
 
-  const filtered = filter(folderRepos, searchQuery);
+  const filtered = filter(
+    folderRepos.map((fr) => ({
+      ...fr,
+      title: isFolderType(fr) ? fr.folder_name : fr.repo_name,
+    })),
+    searchQuery
+  );
   const sorted = sort(filtered, sortOrder);
   const paginated = paginate(sorted, currentPage, pageSize);
   const { user } = useUser();
   const router = useRouter();
+  const device = useDeviceType();
 
   const handleFolderDoubleClick = (folder: FolderType): void => {
     setSelected([]);
@@ -41,25 +52,64 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
   };
 
   const handleRepoDoubleClick = (repo: RepoType): void => {
-    window.location.href = `https://github.com/${repo.username}/${repo.title}`;
+    window.location.href = `https://github.com/${repo.user_name}/${repo.repo_name}`;
   };
 
-  const handleSingleClick = (folder: FolderRepo): void => {
+  const handleSingleClick = (folder: FolderRepo, e: React.MouseEvent): void => {
     if (selected.findIndex((s) => s.id === folder.id) !== -1) {
-      setSelected(selected.filter((f) => f.id !== folder.id));
+      if (e.ctrlKey || e.metaKey) {
+        setSelected(selected.filter((f) => f.id !== folder.id));
+      } else {
+        setSelected([]);
+      }
     } else {
-      setSelected([folder]);
+      if (e.ctrlKey || e.metaKey) {
+        setSelected([...selected, folder]);
+      } else {
+        setSelected([folder]);
+      }
     }
   };
 
   const isFolderType = (obj: FolderRepo): obj is FolderType => {
-    return "parent_name" in obj;
+    return "parent_id" in obj;
   };
 
   return (
     <div className="min-h-full w-full relative">
       {user !== null && user.user_metadata.user_name === username && (
-        <AddNew path={path} />
+        <>
+          <AddNew
+            path={path}
+            className={selected.length > 0 ? "-bottom-full" : ""}
+          />
+          <Button
+            className={`fixed ${
+              selected.length === 1
+                ? device === "mobile"
+                  ? "bottom-16 right-2"
+                  : "bottom-20 right-6"
+                : selected.length > 1
+                ? device === "mobile"
+                  ? "bottom-2 right-2"
+                  : "bottom-6 right-6"
+                : "bottom-2 -right-full"
+            } h-10 w-10 flex justify-center items-center z-10 transition-all duration-300`}
+          >
+            <FontAwesomeIcon icon={faTrash} size="lg" />
+          </Button>
+          <Button
+            className={`fixed ${
+              selected.length === 1
+                ? device === "mobile"
+                  ? "bottom-2 right-2"
+                  : "bottom-6 right-6"
+                : "bottom-2 -right-full"
+            } h-10 w-10 flex justify-center items-center z-10 transition-all duration-300`}
+          >
+            <FontAwesomeIcon icon={faPen} size="lg" />
+          </Button>
+        </>
       )}
       <Container
         title={path.slice(-1)[0]}
@@ -82,8 +132,8 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
               onDoubleClick={() => {
                 handleFolderDoubleClick(c);
               }}
-              onSingleClick={() => {
-                handleSingleClick(c);
+              onSingleClick={(e) => {
+                handleSingleClick(c, e);
               }}
             />
           ) : (
@@ -94,8 +144,8 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
               onDoubleClick={() => {
                 handleRepoDoubleClick(c);
               }}
-              onSingleClick={() => {
-                handleSingleClick(c);
+              onSingleClick={(e) => {
+                handleSingleClick(c, e);
               }}
             />
           )
@@ -115,13 +165,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const path = params.path as string[];
-  const pathString = path.slice(1).join("/").trim();
-  const username = path[0].trim();
-  const currentFolderName = path[path.length - 1].trim();
+  const userName = path.shift() as string;
+  const pathString = path.join("/").trim();
 
-  if (path.length === 1) {
+  if (path.length === 0) {
     // root folder
-    const folders = await Supabase.getRootFolders(username);
+    const folders = await Supabase.getRootFolders(userName);
+
     if (folders === null) {
       return {
         notFound: true,
@@ -130,24 +180,30 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     return {
       props: {
         path,
-        username,
-        currentFolderName,
+        username: userName,
         params,
         data: folders,
       },
     };
   }
-  const folders = await Supabase.getSubFolders(
-    username,
-    currentFolderName,
-    pathString
-  );
+  const currentFolderName = path[path.length - 1].trim();
+  const folderId = await Supabase.getFolderId(userName, pathString);
+  if (folderId instanceof Error) {
+    return {
+      notFound: true,
+    };
+  }
+  const folders = await Supabase.getSubFolders({
+    parentId: folderId,
+    userName,
+    path: pathString,
+  });
 
-  const repos = await Supabase.getRepos(
-    username,
-    currentFolderName,
-    pathString
-  );
+  const repos = await Supabase.getRepos({
+    folderId,
+    userName,
+    path: pathString,
+  });
 
   if (folders === null || repos === null) {
     return {
@@ -160,7 +216,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   return {
     props: {
       path,
-      username,
+      username: userName,
       currentFolderName,
       params,
       data: repoFolders,

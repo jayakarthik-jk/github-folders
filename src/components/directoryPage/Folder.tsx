@@ -6,16 +6,16 @@ import { faFolder } from "@fortawesome/free-solid-svg-icons";
 import withDoubleClick from "@/hoc/withDoubleClick";
 
 interface FolderProps extends ContainerChildProps, FolderType {
-  onClick?: () => void;
-  onSingleClick: () => void;
-  onDoubleClick: () => void;
+  onClick?: (e: React.MouseEvent) => void;
+  onSingleClick: (e: React.MouseEvent) => void;
+  onDoubleClick: (e: React.MouseEvent) => void;
   selected?: boolean;
 }
 
 const Folder: FC<FolderProps> = ({
   size = "list",
   title,
-  onClick: handleClick,
+  onClick: handleClick = () => {},
   selected = false,
 }) => {
   return (

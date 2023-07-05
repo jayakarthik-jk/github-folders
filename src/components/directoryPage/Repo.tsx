@@ -6,9 +6,9 @@ import withDoubleClick from "@/hoc/withDoubleClick";
 import { faGit } from "@fortawesome/free-brands-svg-icons";
 
 interface RepoProps extends ContainerChildProps, RepoType {
-  onClick?: () => void;
-  onSingleClick: () => void;
-  onDoubleClick: () => void;
+  onClick?: (e: React.MouseEvent) => void;
+  onSingleClick: (e: React.MouseEvent) => void;
+  onDoubleClick: (e: React.MouseEvent) => void;
   selected?: boolean;
 }
 

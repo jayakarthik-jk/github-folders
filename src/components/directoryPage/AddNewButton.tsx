@@ -7,12 +7,14 @@ import Model from "../common/Model";
 import { faGit } from "@fortawesome/free-brands-svg-icons";
 import CreateFolderFormContent from "./CreateFolderFormContent";
 import CreateRepoFormContent from "./CreateRepoFormContent";
+import { twMerge } from "tailwind-merge";
 
 interface AddNewProps {
   path: string[];
+  className?: string;
 }
 
-const AddNew: FC<AddNewProps> = ({ path }) => {
+const AddNew: FC<AddNewProps> = ({ path, className }) => {
   const [modelVisibility, setModelVisibility] = useState(false);
   const [formVisibility, setFormVisibility] = useState(false);
   type Options = "Folder" | "Repo";
@@ -24,12 +26,16 @@ const AddNew: FC<AddNewProps> = ({ path }) => {
     setFormVisibility(true);
     setSelected(selected);
   };
+  const addBtnClass = twMerge(
+    `fixed bottom-0 right-0 h-10 w-10 flex justify-center items-center ${
+      device === "mobile" ? "bottom-2 right-2" : "bottom-6 right-6"
+    } z-10 transition-all duration-300`,
+    className
+  );
   return (
     <>
       <Button
-        className={`fixed bottom-0 right-0 h-10 w-10 flex justify-center items-center ${
-          device === "mobile" ? "bottom-2 right-2" : "bottom-6 right-6"
-        } z-10`}
+        className={addBtnClass}
         onClick={() => {
           setModelVisibility(true);
         }}

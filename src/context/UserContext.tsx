@@ -31,6 +31,7 @@ const UserProvider: FC<UserProviderProps> = ({ children }) => {
       provider: "github",
       options: {
         scopes: "public_repo",
+        redirectTo: location.href,
       },
     });
   };

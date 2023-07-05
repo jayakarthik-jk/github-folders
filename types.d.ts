@@ -35,20 +35,23 @@ declare global {
   }
 
   interface FolderType {
-    created_at: string | null;
     id: number;
-    parent_name: string | null;
+    user_id: string;
+    user_name: string;
+    folder_name: string;
+    parent_id: number | null;
     path: string;
-    title: string;
-    username: string;
+    created_at: string;
   }
+
   interface RepoType {
     id: number;
-    repo_id: string;
-    created_at: string | null;
-    title: string;
-    username: string;
-    folder_name: string | null;
+    repo_name: string;
+    user_id: string;
+    user_name: string;
+    folder_id: number | null;
+    path: string;
+    created_at: string;
   }
 
   type FolderRepo = FolderType | RepoType;
