@@ -81,7 +81,10 @@ const Navbar: FC = () => {
             </Button>
           </>
         ) : (
-          <Button onClick={login}>
+          <Button
+            onClick={login}
+            className="bg-primary-300 border-primary-300 hover:bg-dark-100"
+          >
             Login
             <FontAwesomeIcon icon={faArrowRightToBracket} size="lg" />
           </Button>

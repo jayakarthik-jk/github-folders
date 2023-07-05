@@ -14,7 +14,7 @@ interface AddNewProps {
   className?: string;
 }
 
-const AddNew: FC<AddNewProps> = ({ path, className }) => {
+const AddNewButton: FC<AddNewProps> = ({ path, className }) => {
   const [modelVisibility, setModelVisibility] = useState(false);
   const [formVisibility, setFormVisibility] = useState(false);
   type Options = "Folder" | "Repo";
@@ -29,7 +29,7 @@ const AddNew: FC<AddNewProps> = ({ path, className }) => {
   const addBtnClass = twMerge(
     `fixed bottom-0 right-0 h-10 w-10 flex justify-center items-center ${
       device === "mobile" ? "bottom-2 right-2" : "bottom-6 right-6"
-    } z-10 transition-all duration-300`,
+    } z-10 transition-all duration-300 bg-primary-300 border-primary-300 hover:bg-dark-100`,
     className
   );
   return (
@@ -46,9 +46,8 @@ const AddNew: FC<AddNewProps> = ({ path, className }) => {
         onClose={() => {
           setModelVisibility((visibility) => !visibility);
         }}
-        className={`transition-all duration-300 ${
-          modelVisibility ? "scale-100" : "scale-0"
-        }`}
+        className={modelVisibility ? "scale-100" : "scale-0"}
+        containerClassName="p-16"
       >
         <FontAwesomeIcon
           className="border-2 border-dark-100  p-2 px-4 rounded-lg hover:border-primary-300 cursor-pointer"
@@ -81,9 +80,7 @@ const AddNew: FC<AddNewProps> = ({ path, className }) => {
         onClose={() => {
           setFormVisibility((visibility) => !visibility);
         }}
-        className={`transition-all duration-300 ${
-          formVisibility ? "scale-100" : "scale-0"
-        }`}
+        className={formVisibility ? "scale-100" : "scale-0"}
         containerClassName="flex-col gap-8 p-8"
       >
         {selected === "Folder" ? (
@@ -106,4 +103,4 @@ const AddNew: FC<AddNewProps> = ({ path, className }) => {
   );
 };
 
-export default AddNew;
+export default AddNewButton;

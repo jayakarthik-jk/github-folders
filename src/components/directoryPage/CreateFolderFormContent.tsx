@@ -31,6 +31,7 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
       setError("Folder name cannot be empty");
       return;
     }
+
     if (user == null || user.user_metadata.user_name == null) {
       setError("Something went wrong, please try logging in again");
       return;
@@ -40,14 +41,12 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
 
     const userName = user.user_metadata.user_name;
     const userId = user.id;
-    // TODO: replace path[path.length - 1]
-
     let parentId = null;
 
     if (path.length !== 0) {
       const responseParentId = await Supabase.getFolderId(
         userName,
-        path.join("/")
+        path.slice(1).join("/")
       );
 
       if (responseParentId instanceof Error) {

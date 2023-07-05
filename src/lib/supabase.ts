@@ -16,7 +16,7 @@ export default class Supabase {
 
   static client: SupabaseInstance | null = null;
 
-  private static createClient(): SupabaseInstance {
+  private static readonly createClient = (): SupabaseInstance => {
     const { publicRuntimeConfig } = getConfig();
     const { supabaseUrl, supabaseKey } = publicRuntimeConfig;
 
@@ -25,18 +25,18 @@ export default class Supabase {
       throw new Error("Supabase credentials not found");
     }
     return createClient<Database>(supabaseUrl, supabaseKey);
-  }
+  };
 
-  static getInstance(): SupabaseInstance {
+  static getInstance = (): SupabaseInstance => {
     if (Supabase.client == null) {
       Supabase.client = Supabase.createClient();
     }
     return Supabase.client;
-  }
+  };
 
-  static setInstance(instance: SupabaseInstance): void {
-    Supabase.client = instance;
-  }
+  static isFolderType = (obj: FolderRepo): obj is FolderType => {
+    return "parent_id" in obj;
+  };
 
   static getFolderId = async (
     userName: string,
@@ -47,7 +47,7 @@ export default class Supabase {
       .select("id")
       .eq("user_name", userName)
       .eq("path", path)
-      .single();
+      .maybeSingle();
 
     if (folderError !== null || folder === null) {
       return new Error("cannot find folder, try again later");
@@ -137,10 +137,8 @@ export default class Supabase {
       await Supabase.getInstance()
         .from(Supabase.tables.FOLDER)
         .select("*")
-        .eq("username", userName)
+        .eq("user_name", userName)
         .eq("path", path);
-
-    console.log({ existingFolder, existingFolderError });
 
     if (existingFolderError !== null) {
       return new Error("Something went wrong, try again later");
@@ -159,14 +157,9 @@ export default class Supabase {
         path,
       })
       .select("*")
-      .single();
+      .maybeSingle();
 
-    console.log({
-      folder,
-      folderError,
-    });
-
-    if (folderError !== null) {
+    if (folderError !== null || folder === null) {
       return new Error("cannot create folder, try again later");
     }
 
@@ -190,7 +183,7 @@ export default class Supabase {
       await Supabase.getInstance()
         .from(Supabase.tables.REPO)
         .select("*")
-        .eq("username", userName)
+        .eq("user_name", userName)
         .eq("path", path);
 
     if (existingRepoError !== null) {
@@ -211,12 +204,64 @@ export default class Supabase {
         path,
       })
       .select("*")
-      .single();
+      .maybeSingle();
 
-    if (repoError !== null) {
+    if (repoError !== null || repo === null) {
       return new Error("cannot create repo, try again later");
     }
 
     return repo;
+  };
+
+  static deleteFolders = async ({
+    ids,
+  }: {
+    ids: number[];
+  }): Promise<Error | null> => {
+    const { error: deletionError } = await Supabase.getInstance()
+      .from(Supabase.tables.FOLDER)
+      .delete()
+      .in("id", ids);
+    if (deletionError === null) {
+      return new Error("cannot delete, try again");
+    }
+    return null;
+  };
+
+  static deleteRepos = async ({
+    ids,
+  }: {
+    ids: number[];
+  }): Promise<Error | null> => {
+    const { error: deletionError } = await Supabase.getInstance()
+      .from(Supabase.tables.REPO)
+      .delete()
+      .in("id", ids);
+    if (deletionError !== null) {
+      return new Error("cannot delete, try again");
+    }
+    return null;
+  };
+
+  static renameFolder = async ({
+    id,
+    name,
+  }: {
+    id: number;
+    name: string;
+  }): Promise<FolderType | Error> => {
+    const { data: folder, error } = await Supabase.getInstance()
+      .from(Supabase.tables.FOLDER)
+      .update({
+        folder_name: name,
+      })
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error !== null || folder === null) {
+      return new Error("cannot rename folder, try again later");
+    }
+    return folder;
   };
 }

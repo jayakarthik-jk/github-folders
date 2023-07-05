@@ -16,7 +16,7 @@ const Button: FC<ButtonProps> = ({
   disabled = false,
 }) => {
   const defaultClasses =
-    "h-10 bg-dark-100 border-2 border-dark-100 p-2 px-4 rounded-lg font-semibold flex gap-2 items-center hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed";
+    "transition-all duration-300 h-10 bg-dark-100 border-2 border-dark-100 p-2 px-4 rounded-lg font-semibold flex gap-2 items-center hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed";
 
   className = twMerge(defaultClasses, className);
 

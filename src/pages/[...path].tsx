@@ -8,33 +8,28 @@ import Repo from "@/components/directoryPage/Repo";
 import { filter, paginate, sort } from "@/utils/arrays";
 import Supabase from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
-import AddNew from "@/components/directoryPage/AddNewButton";
-import Button from "@/components/common/Button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
-import useDeviceType from "@/hooks/useDeviceType";
+import AddNewButton from "@/components/directoryPage/AddNewButton";
+import DeleteButton from "@/components/directoryPage/DeleteButton";
+import RenameButton from "@/components/directoryPage/RenameButton";
 
 export interface UserPageProps {
-  path: string[];
-  username: string;
-  currentFolderName: string | null;
   data: FolderRepo[];
+  path: string[];
+  userName: string;
 }
 
-const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
+const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, userName }) => {
   const [searchbarVisibility, setSearchbarVisibility] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 30;
   const [sortOrder, setSortOrder] = useState<SortOptions>("asc");
-
   const [selected, setSelected] = useState<FolderRepo[]>([]);
 
   const filtered = filter(
     folderRepos.map((fr) => ({
       ...fr,
-      title: isFolderType(fr) ? fr.folder_name : fr.repo_name,
+      title: Supabase.isFolderType(fr) ? fr.folder_name : fr.repo_name,
     })),
     searchQuery
   );
@@ -42,11 +37,10 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
   const paginated = paginate(sorted, currentPage, pageSize);
   const { user } = useUser();
   const router = useRouter();
-  const device = useDeviceType();
 
   const handleFolderDoubleClick = (folder: FolderType): void => {
     setSelected([]);
-    router.push(`${username}/${folder.path}`).catch((e) => {
+    router.push(`${userName}/${folder.path}`).catch((e) => {
       console.log(e);
     });
   };
@@ -71,48 +65,20 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
     }
   };
 
-  const isFolderType = (obj: FolderRepo): obj is FolderType => {
-    return "parent_id" in obj;
-  };
-
   return (
     <div className="min-h-full w-full relative">
-      {user !== null && user.user_metadata.user_name === username && (
+      {user !== null && user.user_metadata.user_name === userName && (
         <>
-          <AddNew
+          <AddNewButton
             path={path}
             className={selected.length > 0 ? "-bottom-full" : ""}
           />
-          <Button
-            className={`fixed ${
-              selected.length === 1
-                ? device === "mobile"
-                  ? "bottom-16 right-2"
-                  : "bottom-20 right-6"
-                : selected.length > 1
-                ? device === "mobile"
-                  ? "bottom-2 right-2"
-                  : "bottom-6 right-6"
-                : "bottom-2 -right-full"
-            } h-10 w-10 flex justify-center items-center z-10 transition-all duration-300`}
-          >
-            <FontAwesomeIcon icon={faTrash} size="lg" />
-          </Button>
-          <Button
-            className={`fixed ${
-              selected.length === 1
-                ? device === "mobile"
-                  ? "bottom-2 right-2"
-                  : "bottom-6 right-6"
-                : "bottom-2 -right-full"
-            } h-10 w-10 flex justify-center items-center z-10 transition-all duration-300`}
-          >
-            <FontAwesomeIcon icon={faPen} size="lg" />
-          </Button>
+          <DeleteButton selected={selected} />
+          <RenameButton selected={selected} />
         </>
       )}
       <Container
-        title={path.slice(-1)[0]}
+        title={path[path.length - 1]}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         pageCount={Math.ceil(filtered.length / pageSize)}
@@ -124,7 +90,7 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
         setSearchQuery={setSearchQuery}
       >
         {paginated.map((c) =>
-          isFolderType(c) ? (
+          Supabase.isFolderType(c) ? (
             <Folder
               key={c.id}
               {...c}
@@ -155,9 +121,7 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, username }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { params } = context;
-
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   if (params === undefined) {
     return {
       notFound: true,
@@ -165,10 +129,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const path = params.path as string[];
-  const userName = path.shift() as string;
-  const pathString = path.join("/").trim();
+  const userName = path[0];
+  const pathString = path.slice(1).join("/").trim();
 
-  if (path.length === 0) {
+  if (path.length === 1) {
     // root folder
     const folders = await Supabase.getRootFolders(userName);
 
@@ -179,14 +143,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
     return {
       props: {
-        path,
-        username: userName,
-        params,
         data: folders,
+        userName,
+        path,
       },
     };
   }
-  const currentFolderName = path[path.length - 1].trim();
   const folderId = await Supabase.getFolderId(userName, pathString);
   if (folderId instanceof Error) {
     return {
@@ -211,15 +173,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const repoFolders: FolderRepo[] = [...folders, ...repos];
+  const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
 
   return {
     props: {
+      data: foldersAndRepos,
+      userName,
       path,
-      username: userName,
-      currentFolderName,
-      params,
-      data: repoFolders,
     },
   };
 };

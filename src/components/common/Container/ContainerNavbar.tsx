@@ -18,14 +18,14 @@ const ContainerNavbar: FC<ContainerNavbarProps> = ({
   return (
     <div className="h-12 transition-all duration-300 flex justify-between items-center bg-dark-100 rounded-lg">
       <div
-        className="flex justify-center items-center cursor-pointer mx-4 h-full"
+        className="flex justify-center items-center cursor-pointer w-12 h-full"
         onClick={onBack}
       >
         <FontAwesomeIcon icon={faArrowLeft} size="lg" />
       </div>
       <span style={{ userSelect: "none" }}>{title}</span>
       <div
-        className="flex justify-center items-center cursor-pointer mx-4 h-full"
+        className="flex justify-center items-center cursor-pointer w-12 h-full"
         onClick={() => {
           setMenuVisibility(!menuVisibility);
         }}

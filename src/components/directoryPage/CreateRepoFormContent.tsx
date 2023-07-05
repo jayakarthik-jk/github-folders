@@ -43,19 +43,6 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
       console.log(err);
     });
   }, []);
-
-  if (error !== "") {
-    return <span className="text-red-500">{error}</span>;
-  }
-
-  if (loading) {
-    return (
-      <span className="p-16 flex flex-col gap-4 font-bold text-lg">
-        Loading . . .
-        <Spinner />
-      </span>
-    );
-  }
   const handleRepoSelect = async (repo: Repository): Promise<void> => {
     setLoading(true);
     if (user == null || user.user_metadata.user_name == null) {
@@ -64,13 +51,11 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
       return;
     }
     const userName = user.user_metadata.user_name;
-
-    // TODO replace path[path.length - 1]
     let folderId = null;
     if (path.length - 1 !== 0) {
       const responseParentId = await Supabase.getFolderId(
         userName,
-        path.join("/")
+        path.slice(1).join("/")
       );
       if (responseParentId instanceof Error) {
         setError("Something went wrong, please try again later");
@@ -104,27 +89,43 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
     setError("");
     closeModel();
   };
+
+  if (error !== "") {
+    return <span className="text-red-500">{error}</span>;
+  }
+
+  if (loading) {
+    return (
+      <span className="p-16 flex flex-col gap-4 font-bold text-lg">
+        Loading . . .
+        <Spinner />
+      </span>
+    );
+  }
   return (
-    <ul className="max-h-[50vh] overflow-y-scroll">
-      {repositories.nodes.map((repo) => (
-        <li
-          key={repo.id}
-          className="hover:bg-dark-200 p-4 flex justify-between rounded-lg"
-        >
-          {repo.name}
-          <Button
-            onClick={() => {
-              handleRepoSelect(repo).catch((err) => {
-                setError("Something went wrong, please try again later");
-                console.log(err);
-              });
-            }}
+    <>
+      <span className="font-bold text-lg">Select from the list</span>
+      <ul className="max-h-[50vh] overflow-y-scroll">
+        {repositories.nodes.map((repo) => (
+          <li
+            key={repo.id}
+            className="hover:bg-dark-200 p-4 flex justify-between rounded-lg"
           >
-            Select
-          </Button>
-        </li>
-      ))}
-    </ul>
+            {repo.name}
+            <Button
+              onClick={() => {
+                handleRepoSelect(repo).catch((err) => {
+                  setError("Something went wrong, please try again later");
+                  console.log(err);
+                });
+              }}
+            >
+              Select
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 };
 
