@@ -114,10 +114,9 @@ const DeleteButton: FC<DeleteButtonProps> = ({
             <Button
               className="bg-red-500 hover:bg-dark-100 hover:border-red-500"
               onClick={() => {
-                handleDeleting().catch((err) => {
+                handleDeleting().catch(() => {
                   setError("Something went wrong, please try again later");
                   setLoading(false);
-                  console.log(err);
                 });
               }}
             >

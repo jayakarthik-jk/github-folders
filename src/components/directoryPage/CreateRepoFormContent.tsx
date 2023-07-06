@@ -37,10 +37,9 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
       setRepositories(res);
       setLoading(false);
     };
-    fetchRepos().catch((err) => {
+    fetchRepos().catch(() => {
       setError("Something went wrong, please try again later");
       setLoading(false);
-      console.log(err);
     });
   }, []);
   const handleRepoSelect = async (repo: Repository): Promise<void> => {
@@ -112,10 +111,9 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
             {repo.name}
             <Button
               onClick={() => {
-                handleRepoSelect(repo).catch((err) => {
+                handleRepoSelect(repo).catch(() => {
                   setError("Something went wrong, please try again later");
                   setLoading(false);
-                  console.log(err);
                 });
               }}
             >

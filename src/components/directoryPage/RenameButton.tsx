@@ -24,7 +24,6 @@ const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
   const handleRenaming = async (): Promise<void> => {
     const newName = newFolderNameInput.trim();
     if (newName === undefined) {
-      console.log("developer error: cannot find input ref");
       setError("something went wrong, try again later");
       return;
     }
@@ -99,8 +98,7 @@ const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
             // enter key to submit
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleRenaming().catch((err) => {
-                  console.log(err);
+                handleRenaming().catch(() => {
                   setError("Something went wrong, try again later");
                 });
               }
@@ -110,10 +108,9 @@ const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
             <Button
               className="bg-dark-300 disabled:opacity-40"
               onClick={() => {
-                handleRenaming().catch((err) => {
+                handleRenaming().catch(() => {
                   setError("Something went wrong, please try again later");
                   setLoading(false);
-                  console.log(err);
                 });
               }}
               disabled={loading}

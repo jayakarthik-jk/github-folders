@@ -29,7 +29,6 @@ const SearchPage: FC = () => {
     setLoading(true);
     const fetchData = async (): Promise<void> => {
       if (searchQueryRef.current === null) {
-        console.log("developer error: searchQueryRef is null");
         setError("Something went wrong");
         setLoading(false);
         return;
@@ -61,10 +60,9 @@ const SearchPage: FC = () => {
       setLoading(false);
     };
 
-    fetchData().catch((err) => {
+    fetchData().catch(() => {
       setError("Something went wrong");
       setLoading(false);
-      console.log(err);
     });
   }, [logout, pageInfo]);
 

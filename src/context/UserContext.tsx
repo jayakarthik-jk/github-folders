@@ -46,7 +46,6 @@ const UserProvider: FC<UserProviderProps> = ({ children }) => {
       .auth.getUser()
       .then((user) => {
         if (user.error != null) {
-          console.log(user.error.message);
           return;
         }
         setUser(user.data.user);

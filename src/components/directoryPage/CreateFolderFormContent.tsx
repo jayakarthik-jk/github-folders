@@ -93,9 +93,8 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handleCreateFolder().catch((err) => {
+              handleCreateFolder().catch(() => {
                 setError("Something went wrong, please try again later");
-                console.log(err);
               });
             }
           }}
@@ -104,10 +103,9 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
       <Button
         className="bg-dark-300"
         onClick={() => {
-          handleCreateFolder().catch((err) => {
+          handleCreateFolder().catch(() => {
             setError("Something went wrong, please try again later");
             setLoading(false);
-            console.log(err);
           });
         }}
         disabled={loading}
