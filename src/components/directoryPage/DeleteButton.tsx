@@ -6,17 +6,24 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Supabase from "@/lib/supabase";
 import Model from "../common/Model";
 import Spinner from "../common/Spinner";
+import { useUser } from "@/context/UserContext";
 
 interface DeleteButtonProps {
   selected: FolderRepo[];
+  removeFromList: (ids: number[]) => void;
+  setSelected: (selected: FolderRepo[]) => void;
 }
 
-const DeleteButton: FC<DeleteButtonProps> = ({ selected }) => {
+const DeleteButton: FC<DeleteButtonProps> = ({
+  selected,
+  removeFromList,
+  setSelected,
+}) => {
   const device = useDeviceType();
   const [modelVisibility, setModelVisibility] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const { user } = useUser();
   const mobileUp = "bottom-16 right-2";
   const mobileDown = "bottom-2 right-2";
   const desktopUp = "bottom-20 right-6";
@@ -27,21 +34,42 @@ const DeleteButton: FC<DeleteButtonProps> = ({ selected }) => {
     selected.forEach((s) =>
       Supabase.isFolderType(s) ? folderIds.push(s.id) : repoIds.push(s.id)
     );
+    if (user == null || user.user_metadata.user_name == null) {
+      setError("Something went wrong, please try logging in again");
+      return;
+    }
+    const userName = user.user_metadata.user_name;
+    const userId = user.id;
     setLoading(true);
     if (folderIds.length > 0) {
-      const error = await Supabase.deleteFolders({ ids: folderIds });
+      const error = await Supabase.deleteFolders({
+        ids: folderIds,
+        userName,
+        userId,
+      });
       if (error !== null) {
         setError(error.message);
+        setLoading(false);
+        return;
       }
     }
     if (repoIds.length > 0) {
-      const error = await Supabase.deleteRepos({ ids: repoIds });
+      const error = await Supabase.deleteRepos({
+        ids: repoIds,
+        userName,
+        userId,
+      });
       if (error !== null) {
         setError(error.message);
+        setLoading(false);
+
+        return;
       }
     }
     setLoading(false);
     setModelVisibility(false);
+    setSelected([]);
+    removeFromList([...folderIds, ...repoIds]);
   };
   return (
     <>

@@ -12,9 +12,10 @@ import { twMerge } from "tailwind-merge";
 interface AddNewProps {
   path: string[];
   className?: string;
+  addToList: (item: FolderRepo) => void;
 }
 
-const AddNewButton: FC<AddNewProps> = ({ path, className }) => {
+const AddNewButton: FC<AddNewProps> = ({ path, className, addToList }) => {
   const [modelVisibility, setModelVisibility] = useState(false);
   const [formVisibility, setFormVisibility] = useState(false);
   type Options = "Folder" | "Repo";
@@ -89,6 +90,7 @@ const AddNewButton: FC<AddNewProps> = ({ path, className }) => {
               setFormVisibility(false);
             }}
             path={path}
+            addToList={addToList}
           />
         ) : (
           <CreateRepoFormContent
@@ -96,6 +98,7 @@ const AddNewButton: FC<AddNewProps> = ({ path, className }) => {
               setFormVisibility(false);
             }}
             path={path}
+            addToList={addToList}
           />
         )}
       </Model>

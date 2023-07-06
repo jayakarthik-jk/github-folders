@@ -4,15 +4,16 @@ import Spinner from "../common/Spinner";
 import GithubApi from "@/lib/githubApi";
 import Supabase from "@/lib/supabase";
 import { useUser } from "@/context/UserContext";
-import { useRouter } from "next/router";
 
 interface RepoFormContentProps {
   path: string[];
   closeModel: () => void;
+  addToList: (item: FolderRepo) => void;
 }
 const CreateRepoFormContent: FC<RepoFormContentProps> = ({
   closeModel,
   path,
+  addToList,
 }) => {
   const [repositories, setRepositories] = useState<Repositories>({
     totalCount: 0,
@@ -21,7 +22,6 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { user } = useUser();
-  const router = useRouter();
 
   useEffect(() => {
     const fetchRepos = async (): Promise<void> => {
@@ -52,7 +52,7 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
     }
     const userName = user.user_metadata.user_name;
     let folderId = null;
-    if (path.length - 1 !== 0) {
+    if (path.length > 1) {
       const responseParentId = await Supabase.getFolderId(
         userName,
         path.slice(1).join("/")
@@ -66,9 +66,7 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
     }
 
     const pathString =
-      path.length - 1 === 0
-        ? repo.name
-        : path.slice(1).join("/") + "/" + repo.name;
+      path.length > 1 ? path.slice(1).join("/") + "/" + repo.name : repo.name;
 
     const result = await Supabase.createRepo({
       repoName: repo.name,
@@ -84,7 +82,7 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
       return;
     }
 
-    router.reload();
+    addToList(result);
     setLoading(false);
     setError("");
     closeModel();

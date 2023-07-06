@@ -2,8 +2,9 @@ import { type FC } from "react";
 
 const Home: FC = () => {
   return (
-    <main className="h-min-screen w-full flex justify-center items-center">
-      welcome to github folders
+    <main className="h-[90vh] w-full flex flex-col justify-center items-center">
+      <span>welcome to github folders</span>
+      <span>Home page need some works😅</span>
     </main>
   );
 };

@@ -1,5 +1,5 @@
-import { type FC, useState } from "react";
-import type { GetServerSideProps } from "next";
+import { type FC, useState, useEffect } from "react";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 
 import Container from "@/components/common/Container";
@@ -18,13 +18,36 @@ export interface UserPageProps {
   userName: string;
 }
 
-const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, userName }) => {
+const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
+  const [folderRepos, setFolderRepos] = useState<FolderRepo[]>(data);
   const [searchbarVisibility, setSearchbarVisibility] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 30;
   const [sortOrder, setSortOrder] = useState<SortOptions>("asc");
   const [selected, setSelected] = useState<FolderRepo[]>([]);
+
+  useEffect(() => {
+    setFolderRepos(data);
+  }, [data]);
+
+  const removeFromList = (ids: number[]): void => {
+    setFolderRepos((prevList) =>
+      prevList.filter((item) => !ids.includes(item.id))
+    );
+  };
+
+  const addToList = (item: FolderRepo): void => {
+    setFolderRepos((prevList) => [...prevList, item]);
+  };
+
+  const renameListItem = (id: number, name: string, path: string): void => {
+    setFolderRepos((prevList) =>
+      prevList.map((item) =>
+        item.id === id ? { ...item, folder_name: name, path } : item
+      )
+    );
+  };
 
   const filtered = filter(
     folderRepos.map((fr) => ({
@@ -33,6 +56,7 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, userName }) => {
     })),
     searchQuery
   );
+
   const sorted = sort(filtered, sortOrder);
   const paginated = paginate(sorted, currentPage, pageSize);
   const { user } = useUser();
@@ -72,9 +96,14 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, userName }) => {
           <AddNewButton
             path={path}
             className={selected.length > 0 ? "-bottom-full" : ""}
+            addToList={addToList}
           />
-          <DeleteButton selected={selected} />
-          <RenameButton selected={selected} />
+          <DeleteButton
+            selected={selected}
+            removeFromList={removeFromList}
+            setSelected={setSelected}
+          />
+          <RenameButton selected={selected} renameListItem={renameListItem} />
         </>
       )}
       <Container
@@ -121,7 +150,14 @@ const UserPage: FC<UserPageProps> = ({ data: folderRepos, path, userName }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getStaticPaths: GetStaticPaths = async () => {
+  return {
+    paths: [],
+    fallback: "blocking",
+  };
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   if (params === undefined) {
     return {
       notFound: true,
@@ -133,17 +169,17 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const pathString = path.slice(1).join("/").trim();
 
   if (path.length === 1) {
-    // root folder
-    const folders = await Supabase.getRootFolders(userName);
+    // root folders and repos
+    const folderRepos = await Supabase.getRootFolderRepos(userName);
 
-    if (folders === null) {
+    if (folderRepos === null) {
       return {
         notFound: true,
       };
     }
     return {
       props: {
-        data: folders,
+        data: folderRepos,
         userName,
         path,
       },

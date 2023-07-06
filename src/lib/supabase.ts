@@ -16,7 +16,7 @@ export default class Supabase {
 
   static client: SupabaseInstance | null = null;
 
-  private static readonly createClient = (): SupabaseInstance => {
+  private static createClient(): SupabaseInstance {
     const { publicRuntimeConfig } = getConfig();
     const { supabaseUrl, supabaseKey } = publicRuntimeConfig;
 
@@ -24,8 +24,12 @@ export default class Supabase {
       console.log("Supabase credentials not found");
       throw new Error("Supabase credentials not found");
     }
-    return createClient<Database>(supabaseUrl, supabaseKey);
-  };
+    return createClient<Database>(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: true,
+      },
+    });
+  }
 
   static getInstance = (): SupabaseInstance => {
     if (Supabase.client == null) {
@@ -50,14 +54,15 @@ export default class Supabase {
       .maybeSingle();
 
     if (folderError !== null || folder === null) {
+      console.log(folderError);
       return new Error("cannot find folder, try again later");
     }
     return folder.id;
   };
 
-  static getRootFolders = async (
+  static getRootFolderRepos = async (
     userName: string
-  ): Promise<FolderType[] | null> => {
+  ): Promise<FolderRepo[] | null> => {
     const { data: folders, error: folderError } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .select("*")
@@ -65,9 +70,20 @@ export default class Supabase {
       .is("parent_id", null);
 
     if (folderError !== null) {
+      console.log(folderError);
       return null;
     }
-    return folders;
+    const { data: repos, error: reposError } = await Supabase.getInstance()
+      .from(Supabase.tables.REPO)
+      .select("*")
+      .eq("user_name", userName)
+      .is("folder_id", null);
+
+    if (reposError !== null) {
+      console.log(reposError);
+      return null;
+    }
+    return [...folders, ...repos];
   };
 
   static getSubFolders = async ({
@@ -86,6 +102,7 @@ export default class Supabase {
       .eq("parent_id", parentId);
 
     if (folderError !== null) {
+      console.log(folderError);
       return null;
     }
     const result = folders.filter(
@@ -111,6 +128,7 @@ export default class Supabase {
       .eq("folder_id", folderId);
 
     if (repoError !== null) {
+      console.log(repoError);
       return null;
     }
 
@@ -138,9 +156,11 @@ export default class Supabase {
         .from(Supabase.tables.FOLDER)
         .select("*")
         .eq("user_name", userName)
+        .eq("user_id", userId)
         .eq("path", path);
 
     if (existingFolderError !== null) {
+      console.log(existingFolderError);
       return new Error("Something went wrong, try again later");
     }
 
@@ -160,6 +180,7 @@ export default class Supabase {
       .maybeSingle();
 
     if (folderError !== null || folder === null) {
+      console.log(folderError);
       return new Error("cannot create folder, try again later");
     }
 
@@ -184,9 +205,11 @@ export default class Supabase {
         .from(Supabase.tables.REPO)
         .select("*")
         .eq("user_name", userName)
+        .eq("user_id", userId)
         .eq("path", path);
 
     if (existingRepoError !== null) {
+      console.log(existingRepoError);
       return new Error("Something went wrong, try again later");
     }
 
@@ -207,6 +230,7 @@ export default class Supabase {
       .maybeSingle();
 
     if (repoError !== null || repo === null) {
+      console.log(repoError);
       return new Error("cannot create repo, try again later");
     }
 
@@ -214,54 +238,184 @@ export default class Supabase {
   };
 
   static deleteFolders = async ({
+    userName,
+    userId,
     ids,
   }: {
+    userName: string;
+    userId: string;
     ids: number[];
   }): Promise<Error | null> => {
     const { error: deletionError } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .delete()
+      .eq("user_name", userName)
+      .eq("user_id", userId)
       .in("id", ids);
-    if (deletionError === null) {
+    if (deletionError !== null) {
+      console.log(deletionError);
       return new Error("cannot delete, try again");
     }
     return null;
   };
 
   static deleteRepos = async ({
+    userName,
+    userId,
     ids,
   }: {
+    userName: string;
+    userId: string;
     ids: number[];
   }): Promise<Error | null> => {
     const { error: deletionError } = await Supabase.getInstance()
       .from(Supabase.tables.REPO)
       .delete()
+      .eq("user_name", userName)
+      .eq("user_id", userId)
       .in("id", ids);
     if (deletionError !== null) {
+      console.log(deletionError);
       return new Error("cannot delete, try again");
     }
     return null;
   };
 
   static renameFolder = async ({
-    id,
-    name,
+    userName,
+    userId,
+    folder,
+    newName,
+    newPath,
   }: {
-    id: number;
-    name: string;
+    userName: string;
+    userId: string;
+    folder: FolderType;
+    newName: string;
+    newPath: string;
   }): Promise<FolderType | Error> => {
-    const { data: folder, error } = await Supabase.getInstance()
+    const { data: updatedFolder, error } = await Supabase.getInstance()
       .from(Supabase.tables.FOLDER)
       .update({
-        folder_name: name,
+        folder_name: newName,
+        path: newPath,
       })
-      .eq("id", id)
+      .eq("user_name", userName)
+      .eq("user_id", userId)
+      .eq("id", folder.id)
       .select("*")
       .maybeSingle();
 
-    if (error !== null || folder === null) {
-      return new Error("cannot rename folder, try again later");
+    if (error !== null || updatedFolder === null) {
+      console.log(error);
+      return new Error("cannot rename folder, try again later.");
     }
-    return folder;
+
+    const childrenError = await Supabase.getRecursiveChildrens({
+      userName,
+      userId,
+      folder,
+      newPath,
+    });
+
+    if (childrenError !== null) {
+      return childrenError;
+    }
+
+    return updatedFolder;
   };
+
+  private static async getRecursiveChildrens({
+    userName,
+    userId,
+    folder,
+    newPath,
+  }: {
+    userName: string;
+    userId: string;
+    folder: FolderType;
+    newPath: string;
+  }): Promise<Error | null> {
+    const updatePath = async (
+      children: FolderRepo[]
+    ): Promise<Error | null> => {
+      for (const child of children) {
+        const childNewPath = child.path.replace(folder.path, newPath);
+
+        const { data: updatedChild, error: updatedChildError } =
+          await Supabase.getInstance()
+            .from(
+              Supabase.isFolderType(child)
+                ? Supabase.tables.FOLDER
+                : Supabase.tables.REPO
+            )
+            .update({
+              path: childNewPath,
+            })
+            .eq("user_name", userName)
+            .eq("user_id", userId)
+            .eq("id", child.id)
+            .select("*")
+            .maybeSingle();
+
+        if (updatedChildError !== null || updatedChild === null) {
+          console.log(updatedChildError);
+          return new Error("cannot rename, try again later.");
+        }
+        if (Supabase.isFolderType(child)) {
+          const subChildError = await renameRecursively(child);
+          if (subChildError !== null) {
+            console.log(subChildError);
+            return new Error("cannot rename, try again later.");
+          }
+        }
+      }
+      return null;
+    };
+
+    const renameRecursively = async (f: FolderType): Promise<Error | null> => {
+      const { data: subFolders, error: subFolderError } =
+        await Supabase.getInstance()
+          .from(Supabase.tables.FOLDER)
+          .select("*")
+          .eq("user_name", userName)
+          .eq("user_id", userId)
+          .eq("parent_id", f.id);
+
+      if (subFolderError !== null) {
+        console.log(subFolderError);
+        return new Error("cannot rename, try again later.");
+      }
+
+      if (subFolders === null || subFolders.length === 0) {
+        return null;
+      }
+
+      const { data: subRepos, error: subReposError } =
+        await Supabase.getInstance()
+          .from(Supabase.tables.REPO)
+          .select("*")
+          .eq("user_name", userName)
+          .eq("user_id", userId)
+          .eq("folder_id", f.id);
+
+      if (subReposError !== null) {
+        console.log(subReposError);
+        return new Error("cannot rename, try again later.");
+      }
+
+      if (subRepos === null || subRepos.length === 0) {
+        return null;
+      }
+
+      const updationError = await updatePath([...subRepos, ...subFolders]);
+      if (updationError !== null) {
+        console.log(updationError);
+        return updationError;
+      }
+      return null;
+    };
+
+    return await renameRecursively(folder);
+  }
 }
