@@ -15,7 +15,7 @@ interface FolderProps extends ContainerChildProps, FolderType {
 const Folder: FC<FolderProps> = ({
   size = "list",
   title,
-  onClick: handleClick = () => {},
+  onClick: handleClick,
   selected = false,
 }) => {
   return (
@@ -37,7 +37,7 @@ const Folder: FC<FolderProps> = ({
         size={size === "grid" ? "7x" : "3x"}
       />
       <span
-        className={`${selected ? "text-black" : "text-white"}`}
+        className={`${selected ? "text-dark-200" : "text-white"}`}
         style={{ userSelect: "none" }}
       >
         {size === "grid"

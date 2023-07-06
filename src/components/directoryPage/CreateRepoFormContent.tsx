@@ -114,6 +114,7 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
               onClick={() => {
                 handleRepoSelect(repo).catch((err) => {
                   setError("Something went wrong, please try again later");
+                  setLoading(false);
                   console.log(err);
                 });
               }}

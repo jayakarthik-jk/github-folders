@@ -4,7 +4,6 @@ import Button from "../common/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile, faFolder, faPlus } from "@fortawesome/free-solid-svg-icons";
 import Model from "../common/Model";
-import { faGit } from "@fortawesome/free-brands-svg-icons";
 import CreateFolderFormContent from "./CreateFolderFormContent";
 import CreateRepoFormContent from "./CreateRepoFormContent";
 import { twMerge } from "tailwind-merge";
@@ -50,30 +49,28 @@ const AddNewButton: FC<AddNewProps> = ({ path, className, addToList }) => {
         className={modelVisibility ? "scale-100" : "scale-0"}
         containerClassName="p-16"
       >
-        <FontAwesomeIcon
-          className="border-2 border-dark-100  p-2 px-4 rounded-lg hover:border-primary-300 cursor-pointer"
-          icon={faFolder}
-          size={device === "mobile" ? "5x" : "8x"}
-          onClick={() => {
-            handleSelect("Folder");
-          }}
-        />
+        <div className="flex flex-col justify-center">
+          <FontAwesomeIcon
+            className="border-2 border-dark-100  p-2 px-4 rounded-lg hover:border-primary-300 cursor-pointer"
+            icon={faFolder}
+            size={device === "mobile" ? "5x" : "8x"}
+            onClick={() => {
+              handleSelect("Folder");
+            }}
+          />
+          <span className="font-bold text-lg text-center">Folder</span>
+        </div>
         <span>OR</span>
-        <div
-          className="relative border-2 border-dark-100 p-4 rounded-lg hover:border-primary-300 cursor-pointer"
-          onClick={() => {
-            handleSelect("Repo");
-          }}
-        >
+        <div className="flex flex-col justify-center">
           <FontAwesomeIcon
             icon={faFile}
-            size={device === "mobile" ? "5x" : "8x"}
+            size={device === "mobile" ? "4x" : "7x"}
+            className="relative border-2 border-dark-100 p-4 rounded-lg hover:border-primary-300 cursor-pointer"
+            onClick={() => {
+              handleSelect("Repo");
+            }}
           />
-          <FontAwesomeIcon
-            icon={faGit}
-            size={device === "mobile" ? "2x" : "3x"}
-            className="absolute top-0 left-0 inset-0 m-auto text-dark-300"
-          />
+          <span className="font-bold text-lg text-center">Repository</span>
         </div>
       </Model>
 

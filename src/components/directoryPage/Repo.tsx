@@ -3,7 +3,6 @@ import type { ContainerChildProps } from "../common/Container";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile } from "@fortawesome/free-solid-svg-icons";
 import withDoubleClick from "@/hoc/withDoubleClick";
-import { faGit } from "@fortawesome/free-brands-svg-icons";
 
 interface RepoProps extends ContainerChildProps, RepoType {
   onClick?: (e: React.MouseEvent) => void;
@@ -30,22 +29,13 @@ const Repo: FC<RepoProps> = ({
       ${selected ? "bg-white" : ""}
       `}
     >
-      <div className="relative">
-        <FontAwesomeIcon
-          icon={faFile}
-          className={`${size === "grid" ? "w-32" : "w-12"} ${
-            selected ? "text-dark-200" : "text-white"
-          }`}
-          size={size === "grid" ? "7x" : "3x"}
-        />
-        <FontAwesomeIcon
-          icon={faGit}
-          className={`absolute top-0 left-0 inset-0 m-auto ${
-            selected ? "text-white" : "text-dark-200"
-          }`}
-          size={size === "grid" ? "3x" : "1x"}
-        />
-      </div>
+      <FontAwesomeIcon
+        icon={faFile}
+        className={`mb-2 ${size === "grid" ? "w-32" : "w-12"} ${
+          selected ? "text-dark-200" : "text-white"
+        }`}
+        size={size === "grid" ? "7x" : "3x"}
+      />
       <span
         className={`${selected ? "text-dark-200" : "text-white"}`}
         style={{ userSelect: "none" }}

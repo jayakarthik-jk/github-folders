@@ -1,10 +1,10 @@
-import { type FC } from "react";
+import type { ReactNode, FC } from "react";
 
 import { twMerge } from "tailwind-merge";
 
 interface ButtonProps {
   onClick?: () => void;
-  children: any;
+  children: ReactNode;
   className?: string;
   disabled?: boolean;
 }

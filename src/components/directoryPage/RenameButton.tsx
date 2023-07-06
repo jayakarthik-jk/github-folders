@@ -109,7 +109,13 @@ const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
           <div className="flex justify-end">
             <Button
               className="bg-dark-300 disabled:opacity-40"
-              onClick={handleRenaming}
+              onClick={() => {
+                handleRenaming().catch((err) => {
+                  setError("Something went wrong, please try again later");
+                  setLoading(false);
+                  console.log(err);
+                });
+              }}
               disabled={loading}
             >
               Rename
