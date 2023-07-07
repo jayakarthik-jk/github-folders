@@ -54,7 +54,6 @@ export default class Supabase {
       .maybeSingle();
 
     if (folderError !== null || folder === null) {
-      console.log(folderError);
       return new Error("cannot find folder, try again later");
     }
     return folder.id;
@@ -70,7 +69,6 @@ export default class Supabase {
       .is("parent_id", null);
 
     if (folderError !== null) {
-      console.log(folderError);
       return null;
     }
     const { data: repos, error: reposError } = await Supabase.getInstance()
@@ -80,7 +78,6 @@ export default class Supabase {
       .is("folder_id", null);
 
     if (reposError !== null) {
-      console.log(reposError);
       return null;
     }
     return [...folders, ...repos];
@@ -102,7 +99,6 @@ export default class Supabase {
       .eq("parent_id", parentId);
 
     if (folderError !== null) {
-      console.log(folderError);
       return null;
     }
     const result = folders.filter(
@@ -128,7 +124,6 @@ export default class Supabase {
       .eq("folder_id", folderId);
 
     if (repoError !== null) {
-      console.log(repoError);
       return null;
     }
 
@@ -160,7 +155,6 @@ export default class Supabase {
         .eq("path", path);
 
     if (existingFolderError !== null) {
-      console.log(existingFolderError);
       return new Error("Something went wrong, try again later");
     }
 
@@ -180,7 +174,6 @@ export default class Supabase {
       .maybeSingle();
 
     if (folderError !== null || folder === null) {
-      console.log(folderError);
       return new Error("cannot create folder, try again later");
     }
 
@@ -209,7 +202,6 @@ export default class Supabase {
         .eq("path", path);
 
     if (existingRepoError !== null) {
-      console.log(existingRepoError);
       return new Error("Something went wrong, try again later");
     }
 
@@ -230,7 +222,6 @@ export default class Supabase {
       .maybeSingle();
 
     if (repoError !== null || repo === null) {
-      console.log(repoError);
       return new Error("cannot create repo, try again later");
     }
 
@@ -253,7 +244,6 @@ export default class Supabase {
       .eq("user_id", userId)
       .in("id", ids);
     if (deletionError !== null) {
-      console.log(deletionError);
       return new Error("cannot delete, try again");
     }
     return null;
@@ -275,7 +265,6 @@ export default class Supabase {
       .eq("user_id", userId)
       .in("id", ids);
     if (deletionError !== null) {
-      console.log(deletionError);
       return new Error("cannot delete, try again");
     }
     return null;
@@ -307,7 +296,6 @@ export default class Supabase {
       .maybeSingle();
 
     if (error !== null || updatedFolder === null) {
-      console.log(error);
       return new Error("cannot rename folder, try again later.");
     }
 
@@ -359,13 +347,11 @@ export default class Supabase {
             .maybeSingle();
 
         if (updatedChildError !== null || updatedChild === null) {
-          console.log(updatedChildError);
           return new Error("cannot rename, try again later.");
         }
         if (Supabase.isFolderType(child)) {
           const subChildError = await renameRecursively(child);
           if (subChildError !== null) {
-            console.log(subChildError);
             return new Error("cannot rename, try again later.");
           }
         }
@@ -383,7 +369,6 @@ export default class Supabase {
           .eq("parent_id", f.id);
 
       if (subFolderError !== null) {
-        console.log(subFolderError);
         return new Error("cannot rename, try again later.");
       }
 
@@ -400,7 +385,6 @@ export default class Supabase {
           .eq("folder_id", f.id);
 
       if (subReposError !== null) {
-        console.log(subReposError);
         return new Error("cannot rename, try again later.");
       }
 
@@ -410,7 +394,6 @@ export default class Supabase {
 
       const updationError = await updatePath([...subRepos, ...subFolders]);
       if (updationError !== null) {
-        console.log(updationError);
         return updationError;
       }
       return null;

@@ -31,7 +31,7 @@ const UserProvider: FC<UserProviderProps> = ({ children }) => {
       provider: "github",
       options: {
         scopes: "public_repo",
-        redirectTo: "https://github-folders.vercel.app/",
+        redirectTo: location.href,
       },
     });
   };
