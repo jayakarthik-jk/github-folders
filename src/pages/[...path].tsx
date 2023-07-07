@@ -1,5 +1,5 @@
 import { type FC, useState, useEffect } from "react";
-import type { GetServerSideProps } from "next";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 
 import Container from "@/components/common/Container";
@@ -150,7 +150,14 @@ const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getStaticPaths: GetStaticPaths = async () => {
+  return {
+    paths: [],
+    fallback: "blocking",
+  };
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
     if (params === undefined) {
       return {
