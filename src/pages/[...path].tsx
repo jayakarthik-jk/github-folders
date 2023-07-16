@@ -37,15 +37,15 @@ const UserPage: FC<UserPageProps> = () => {
     const fetchDirectory = async (): Promise<
       { data: FolderRepo[]; userName: string; path: string[] } | Error
     > => {
-      const path = router.query.path as string[];
-      console.log(path);
+      let path = router.query.path as string[];
       if (path === undefined) {
         return new Error("loading");
       }
       const userName = path[0];
-      const pathString = path.slice(1).join("/").trim();
+      path = path.slice(1);
+      const pathString = path.join("/").trim();
 
-      if (path.length === 1) {
+      if (path.length === 0) {
         // root folders and repos
         const folderRepos = await Supabase.getRootFolderRepos(userName);
 
@@ -58,10 +58,12 @@ const UserPage: FC<UserPageProps> = () => {
           path,
         };
       }
-      const folderId = await Supabase.getFolderId(userName, pathString);
-      if (folderId instanceof Error) {
-        return new Error(`Error fetching folder ${pathString}`);
+
+      const folderId = +path[path.length - 1];
+      if (Number.isNaN(folderId)) {
+        return new Error("invalid folder id in path");
       }
+
       const folders = await Supabase.getSubFolders({
         parentId: folderId,
         userName,
@@ -75,9 +77,7 @@ const UserPage: FC<UserPageProps> = () => {
       });
 
       if (folders === null || repos === null) {
-        return new Error(
-          `Error fetching subfolders and repos in ${pathString}`
-        );
+        return new Error("Error fetching subfolders and repos");
       }
 
       const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
@@ -120,10 +120,10 @@ const UserPage: FC<UserPageProps> = () => {
     setFolderRepos((prevList) => [...prevList, item]);
   };
 
-  const renameListItem = (id: number, name: string, path: string): void => {
+  const renameListItem = (id: number, name: string): void => {
     setFolderRepos((prevList) =>
       prevList.map((item) =>
-        item.id === id ? { ...item, folder_name: name, path } : item
+        item.id === id ? { ...item, folder_name: name } : item
       )
     );
   };
@@ -141,9 +141,15 @@ const UserPage: FC<UserPageProps> = () => {
 
   const handleFolderDoubleClick = (folder: FolderType): void => {
     setSelected([]);
-    router.push(`${userName}/${folder.path}`).catch((e) => {
-      console.log(e);
-    });
+    router
+      .push(
+        folder.path !== null
+          ? `${userName}/${folder.path}/${folder.id}`
+          : `${userName}/${folder.id}`
+      )
+      .catch((e) => {
+        console.log(e);
+      });
   };
 
   const handleRepoDoubleClick = (repo: RepoType): void => {
@@ -200,7 +206,8 @@ const UserPage: FC<UserPageProps> = () => {
         </>
       )}
       <Container
-        title={path[path.length - 1]}
+        // TODO: fix title
+        title={"Directory"}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         pageCount={Math.ceil(filtered.length / pageSize)}
@@ -242,74 +249,5 @@ const UserPage: FC<UserPageProps> = () => {
     </div>
   );
 };
-
-// export const getServerSideProps: GetServerSideProps = async ({ params }) => {};
-// export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-//   try {
-//     if (params === undefined) {
-//       return {
-//         notFound: true,
-//       };
-//     }
-//     const path = params.path as string[];
-//     const userName = path[0];
-//     const pathString = path.slice(1).join("/").trim();
-
-//     if (path.length === 1) {
-//       // root folders and repos
-//       const folderRepos = await Supabase.getRootFolderRepos(userName);
-
-//       if (folderRepos === null) {
-//         return {
-//           notFound: true,
-//         };
-//       }
-//       return {
-//         props: {
-//           data: folderRepos,
-//           userName,
-//           path,
-//         },
-//       };
-//     }
-//     const folderId = await Supabase.getFolderId(userName, pathString);
-//     if (folderId instanceof Error) {
-//       return {
-//         notFound: true,
-//       };
-//     }
-//     const folders = await Supabase.getSubFolders({
-//       parentId: folderId,
-//       userName,
-//       path: pathString,
-//     });
-
-//     const repos = await Supabase.getRepos({
-//       folderId,
-//       userName,
-//       path: pathString,
-//     });
-
-//     if (folders === null || repos === null) {
-//       return {
-//         notFound: true,
-//       };
-//     }
-
-//     const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
-
-//     return {
-//       props: {
-//         data: foldersAndRepos,
-//         userName,
-//         path,
-//       },
-//     };
-//   } catch (error) {
-//     return {
-//       notFound: true,
-//     };
-//   }
-// };
 
 export default UserPage;

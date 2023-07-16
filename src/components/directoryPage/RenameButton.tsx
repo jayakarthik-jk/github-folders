@@ -10,7 +10,7 @@ import { useUser } from "@/context/UserContext";
 
 interface RenameButtonProps {
   selected: FolderRepo[];
-  renameListItem: (id: number, name: string, path: string) => void;
+  renameListItem: (id: number, name: string) => void;
 }
 
 const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
@@ -40,23 +40,20 @@ const RenameButton: FC<RenameButtonProps> = ({ selected, renameListItem }) => {
 
     setLoading(true);
     setError("");
-    const newPath = [...selected[0].path.split("/").slice(0, -1), newName].join(
-      "/"
-    );
 
     const res = await Supabase.renameFolder({
-      folder: selected[0] as FolderType,
+      folderId: selected[0].id,
       newName,
-      newPath,
       userId,
       userName,
     });
+
     setLoading(false);
     if (res instanceof Error) {
       setError(res.message);
       return;
     }
-    renameListItem(selected[0].id, newName, newPath);
+    renameListItem(selected[0].id, newName);
     setNewFolderNameInput("");
     setModelVisibility(false);
   };

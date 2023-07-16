@@ -40,7 +40,7 @@ declare global {
     user_name: string;
     folder_name: string;
     parent_id: number | null;
-    path: string;
+    path: string | null;
     created_at: string;
   }
 
@@ -50,7 +50,7 @@ declare global {
     user_id: string;
     user_name: string;
     folder_id: number | null;
-    path: string;
+    path: string | null;
     created_at: string;
   }
 

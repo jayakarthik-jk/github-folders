@@ -15,7 +15,7 @@ export interface Database {
           folder_name: string
           id: number
           parent_id: number | null
-          path: string
+          path: string | null
           user_id: string
           user_name: string
         }
@@ -24,7 +24,7 @@ export interface Database {
           folder_name: string
           id?: number
           parent_id?: number | null
-          path: string
+          path?: string | null
           user_id: string
           user_name: string
         }
@@ -33,7 +33,7 @@ export interface Database {
           folder_name?: string
           id?: number
           parent_id?: number | null
-          path?: string
+          path?: string | null
           user_id?: string
           user_name?: string
         }
@@ -57,7 +57,7 @@ export interface Database {
           created_at: string
           folder_id: number | null
           id: number
-          path: string
+          path: string | null
           repo_name: string
           user_id: string
           user_name: string
@@ -66,7 +66,7 @@ export interface Database {
           created_at?: string
           folder_id?: number | null
           id?: number
-          path: string
+          path?: string | null
           repo_name: string
           user_id: string
           user_name: string
@@ -75,7 +75,7 @@ export interface Database {
           created_at?: string
           folder_id?: number | null
           id?: number
-          path?: string
+          path?: string | null
           repo_name?: string
           user_id?: string
           user_name?: string

@@ -38,21 +38,14 @@ const CreateFolderFormContent: FC<FolderFormContentProps> = ({
     const userId = user.id;
     let parentId = null;
 
-    if (path.length > 1) {
-      const responseParentId = await Supabase.getFolderId(
-        userName,
-        path.slice(1).join("/")
-      );
-
-      if (responseParentId instanceof Error) {
-        setError("Something went wrong, please try again later");
-        setLoading(false);
-        return;
+    if (path.length > 0) {
+      const id = +path[path.length - 1];
+      if (Number.isNaN(id)) {
+        setError("invalid folder id in path");
       }
-      parentId = responseParentId;
+      parentId = id;
     }
-    const pathString =
-      path.length > 1 ? path.slice(1).join("/") + "/" + folderName : folderName;
+    const pathString = path.length > 0 ? path.join("/") : null;
 
     const result = await Supabase.createFolder({
       userId,

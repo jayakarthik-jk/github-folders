@@ -51,21 +51,15 @@ const CreateRepoFormContent: FC<RepoFormContentProps> = ({
     }
     const userName = user.user_metadata.user_name;
     let folderId = null;
-    if (path.length > 1) {
-      const responseParentId = await Supabase.getFolderId(
-        userName,
-        path.slice(1).join("/")
-      );
-      if (responseParentId instanceof Error) {
-        setError("Something went wrong, please try again later");
-        setLoading(false);
-        return;
+    if (path.length > 0) {
+      const id = +path[path.length - 1];
+      if (Number.isNaN(id)) {
+        setError("invalid folder id in path");
       }
-      folderId = responseParentId;
+      folderId = id;
     }
 
-    const pathString =
-      path.length > 1 ? path.slice(1).join("/") + "/" + repo.name : repo.name;
+    const pathString = path.length > 0 ? path.join("/") : null;
 
     const result = await Supabase.createRepo({
       repoName: repo.name,
