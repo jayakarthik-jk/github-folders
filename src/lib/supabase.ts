@@ -239,7 +239,8 @@ export default class Supabase {
         .select("*")
         .eq("user_name", userName)
         .eq("user_id", userId)
-        .is("path", path);
+        .is("path", path)
+        .eq("repo_name", repoName);
       existingRepo = data;
       existingRepoError = error;
     } else {
@@ -248,7 +249,8 @@ export default class Supabase {
         .select("*")
         .eq("user_name", userName)
         .eq("user_id", userId)
-        .eq("path", path);
+        .eq("path", path)
+        .eq("repo_name", repoName);
 
       existingRepo = data;
       existingRepoError = error;
