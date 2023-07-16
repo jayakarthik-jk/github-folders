@@ -1,5 +1,4 @@
 import { type FC, useState, useEffect } from "react";
-import type { GetStaticPaths, GetStaticProps } from "next";
 import { useRouter } from "next/router";
 
 import Container from "@/components/common/Container";
@@ -11,6 +10,7 @@ import { useUser } from "@/context/UserContext";
 import AddNewButton from "@/components/directoryPage/AddNewButton";
 import DeleteButton from "@/components/directoryPage/DeleteButton";
 import RenameButton from "@/components/directoryPage/RenameButton";
+import Spinner from "@/components/common/Spinner";
 
 export interface UserPageProps {
   data: FolderRepo[];
@@ -18,18 +18,97 @@ export interface UserPageProps {
   userName: string;
 }
 
-const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
-  const [folderRepos, setFolderRepos] = useState<FolderRepo[]>(data);
+const UserPage: FC<UserPageProps> = () => {
+  const [folderRepos, setFolderRepos] = useState<FolderRepo[]>([]);
+  const [userName, setUserName] = useState("");
+  const [path, setPath] = useState<string[]>([]);
   const [searchbarVisibility, setSearchbarVisibility] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 30;
   const [sortOrder, setSortOrder] = useState<SortOptions>("asc");
   const [selected, setSelected] = useState<FolderRepo[]>([]);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
-    setFolderRepos(data);
-  }, [data]);
+    const fetchDirectory = async (): Promise<
+      { data: FolderRepo[]; userName: string; path: string[] } | Error
+    > => {
+      const path = router.query.path as string[];
+      console.log(path);
+      if (path === undefined) {
+        return new Error("loading");
+      }
+      const userName = path[0];
+      const pathString = path.slice(1).join("/").trim();
+
+      if (path.length === 1) {
+        // root folders and repos
+        const folderRepos = await Supabase.getRootFolderRepos(userName);
+
+        if (folderRepos === null) {
+          return Error("Error fetching root folder repos");
+        }
+        return {
+          data: folderRepos,
+          userName,
+          path,
+        };
+      }
+      const folderId = await Supabase.getFolderId(userName, pathString);
+      if (folderId instanceof Error) {
+        return new Error(`Error fetching folder ${pathString}`);
+      }
+      const folders = await Supabase.getSubFolders({
+        parentId: folderId,
+        userName,
+        path: pathString,
+      });
+
+      const repos = await Supabase.getRepos({
+        folderId,
+        userName,
+        path: pathString,
+      });
+
+      if (folders === null || repos === null) {
+        return new Error(
+          `Error fetching subfolders and repos in ${pathString}`
+        );
+      }
+
+      const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
+
+      return {
+        data: foldersAndRepos,
+        userName,
+        path,
+      };
+    };
+
+    const init = async (): Promise<void> => {
+      const data = await fetchDirectory();
+      if (data instanceof Error) {
+        if (data.message === "loading") {
+          return;
+        }
+        setError(data);
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      setFolderRepos(data.data);
+      setUserName(data.userName);
+      setPath(data.path);
+    };
+
+    init().catch(() => {
+      setError(new Error("Error fetching directory"));
+    });
+  }, [router.query.path]);
 
   const removeFromList = (ids: number[]): void => {
     setFolderRepos((prevList) =>
@@ -59,8 +138,6 @@ const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
 
   const sorted = sort(filtered, sortOrder);
   const paginated = paginate(sorted, currentPage, pageSize);
-  const { user } = useUser();
-  const router = useRouter();
 
   const handleFolderDoubleClick = (folder: FolderType): void => {
     setSelected([]);
@@ -88,6 +165,22 @@ const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
       }
     }
   };
+
+  if (error !== null) {
+    return (
+      <div className="text-red-500 min-h-full w-full flex justify-center items-center">
+        {error.message}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-full w-full flex justify-center items-center">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full w-full relative">
@@ -150,79 +243,73 @@ const UserPage: FC<UserPageProps> = ({ data, path, userName }) => {
   );
 };
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
-};
+// export const getServerSideProps: GetServerSideProps = async ({ params }) => {};
+// export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+//   try {
+//     if (params === undefined) {
+//       return {
+//         notFound: true,
+//       };
+//     }
+//     const path = params.path as string[];
+//     const userName = path[0];
+//     const pathString = path.slice(1).join("/").trim();
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  try {
-    if (params === undefined) {
-      return {
-        notFound: true,
-      };
-    }
-    const path = params.path as string[];
-    const userName = path[0];
-    const pathString = path.slice(1).join("/").trim();
+//     if (path.length === 1) {
+//       // root folders and repos
+//       const folderRepos = await Supabase.getRootFolderRepos(userName);
 
-    if (path.length === 1) {
-      // root folders and repos
-      const folderRepos = await Supabase.getRootFolderRepos(userName);
+//       if (folderRepos === null) {
+//         return {
+//           notFound: true,
+//         };
+//       }
+//       return {
+//         props: {
+//           data: folderRepos,
+//           userName,
+//           path,
+//         },
+//       };
+//     }
+//     const folderId = await Supabase.getFolderId(userName, pathString);
+//     if (folderId instanceof Error) {
+//       return {
+//         notFound: true,
+//       };
+//     }
+//     const folders = await Supabase.getSubFolders({
+//       parentId: folderId,
+//       userName,
+//       path: pathString,
+//     });
 
-      if (folderRepos === null) {
-        return {
-          notFound: true,
-        };
-      }
-      return {
-        props: {
-          data: folderRepos,
-          userName,
-          path,
-        },
-      };
-    }
-    const folderId = await Supabase.getFolderId(userName, pathString);
-    if (folderId instanceof Error) {
-      return {
-        notFound: true,
-      };
-    }
-    const folders = await Supabase.getSubFolders({
-      parentId: folderId,
-      userName,
-      path: pathString,
-    });
+//     const repos = await Supabase.getRepos({
+//       folderId,
+//       userName,
+//       path: pathString,
+//     });
 
-    const repos = await Supabase.getRepos({
-      folderId,
-      userName,
-      path: pathString,
-    });
+//     if (folders === null || repos === null) {
+//       return {
+//         notFound: true,
+//       };
+//     }
 
-    if (folders === null || repos === null) {
-      return {
-        notFound: true,
-      };
-    }
+//     const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
 
-    const foldersAndRepos: FolderRepo[] = [...folders, ...repos];
-
-    return {
-      props: {
-        data: foldersAndRepos,
-        userName,
-        path,
-      },
-    };
-  } catch (error) {
-    return {
-      notFound: true,
-    };
-  }
-};
+//     return {
+//       props: {
+//         data: foldersAndRepos,
+//         userName,
+//         path,
+//       },
+//     };
+//   } catch (error) {
+//     return {
+//       notFound: true,
+//     };
+//   }
+// };
 
 export default UserPage;

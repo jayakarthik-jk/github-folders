@@ -11,7 +11,7 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
 
   return (
     <UserContext>
-      <div className={`${deviceType === "mobile" ? "px-2" : "px-6"}`}>
+      <div className={`${deviceType === "mobile" ? "px-2" : "px-6"} h-[90vh]`}>
         <Navbar />
         <Component {...pageProps} />
       </div>
