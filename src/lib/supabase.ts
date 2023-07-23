@@ -186,7 +186,8 @@ export default class Supabase {
         .select("*")
         .eq("user_name", userName)
         .eq("user_id", userId)
-        .eq("path", path);
+        .eq("path", path)
+        .eq("folder_name", folderName);
 
       existingFolder = data;
       existingFolderError = error;
